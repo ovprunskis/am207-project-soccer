@@ -1,6 +1,6 @@
 \title{Inefficiencies in the Soccer Betting Market}
 \author{
-        Owen Pruniskis \\
+        Owen Prunskis \\
             \and
         Akhil Ketkar\\
 }
@@ -35,7 +35,8 @@ soccer betting market.
 A fair amount of work has been done in this area. But it pales in comparison
 to the amount of research done on American sports, especially baseball.
 The most important work for the purposes of our project is the Dixon-Coles
-1997 paper \cite{dixoncoles}. 
+1997 paper \cite{dixoncoles}. Additional models and expansions are included in the
+bibliography as well. \cite{constantinou-1} \cite{constantinou-2} \cite{constantinou-3}
 
 \section{Methodology}\label{methodology}
 Dixon and Coles propose a bayesian model that uses a bi-variate Poisson 
@@ -57,6 +58,38 @@ English Football focusing on the Premier League which is the top tier of competi
 Although one might suspect the betting market in smaller teams to be less efficient. 
 The data comes from the website Football Data \cite{football-data} which has data for
 all divisional games for multiple years along with the bookmakers odds for each game.
+Additionally, we will leverage the existing EPL ipython notebook, which implements the basic
+model and will allow for more flexibility in improving upon the existing work in the field.
+\cite{EPL-notebook}
+
+\section{Expansions and Improvements}\label{expansions and improvements}
+Existing models typically generate a clustering effect, which tends to normalize 
+outcomes. We look to incorporate additional parameters to address this shortcoming. We 
+consider the following additions:
+
+\begin{enumerate}
+\item {\em Game Importance}, as defined by a threshold point distance away from 
+winning the championship or the lower bound for relegation.
+
+\item {\em Midweek Games}, to capture the effects of player fatigue.
+
+\item {\em Weather}, binary as 'clear' or 'rain', which has a marked effect in other sports 
+litrerature (i.e. baseball)
+
+\item {\em Roster Cost}, amount spent on players and its correlation to improved results 
+(QPR being an obvious outlier)
+
+\item {\em Player Strength}, allows for more granularity in assessing player performance
+\end{enumerate}
+
+\par
+We also hope to assess the validity of the model by exploring intergame data. We 
+hypothesize that modeling goal scoring as poisson is not supported by data, and 
+we hope to fit a more appropriate distribution to the model (such as one distributed 
+over a more reasonable support). Lastly, we hope to investigate the accuracy of the validity
+of the FIFA league coefficients.
+
+
 
 \begin{thebibliography}{1}
 
@@ -65,6 +98,19 @@ all divisional games for multiple years along with the bookmakers odds for each 
 	Volume 46, Issue 2 (1997) 265-280
 	
 	\bibitem{football-data} http://www.football-data.co.uk/englandm.php
+	
+	\bibitem{EPL-notebook} EPL iPython Notebook
+	
+	\bibitem{constantinou-1} Constantinou, A., N. E. Fenton and M. Neil (2013) {\em Profiting
+	from an Inefficient Association Football Gambling Market: Prediction, Risk and 
+	Uncertainty Using Bayesian Networks}.
+	
+	\bibitem{constantinou-2} Constantinou, A., N. E. Fenton and M. Neil (2012). {\em pi-football:
+	A Bayesian network model for forecasting Association Football match outcomes}.
+	
+	\bibitem{constantinou-3} Constantinou, A. , Fenton, N.E., {\em Solving the problem of inadequate
+	scoring rules for assessing probabilistic football forecasting models}, Journal of Quantitative 
+	Analysis in Sports, Vol. 8, Article 1, 2012.
 	
 \end{thebibliography}
 
