@@ -3,6 +3,14 @@ title: Predictions for 4-18-2015
 layout: default
 ---
 
+### Predicting Games for the Week of 4/18
+We do this by fitting our [model](http://nbviewer.ipython.org/github/akhilketkar/am207-project-soccer/blob/master/daniel_weitzenfeld_variation_bb_model_ak_updates.ipynb) to the all the data from the previous weeks of the season. 
+
+![fit](obsVSexpGoals1415E0.png)
+
+![relstr](relStrength1415E0.png)
+
+
 
 | home       | away           | p_home_win | p_away_win | p_draw | mean_home_goals | mean_away_goals | 
 |------------|----------------|------------|------------|--------|-----------------|-----------------| 
