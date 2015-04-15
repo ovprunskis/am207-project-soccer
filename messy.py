@@ -11,6 +11,15 @@ import os
 leagues = {"E0":"English Premier League","I1":"Seria A","SP1":"La Liga Premiera"}
 base_link = "http://www.football-data.co.uk/mmz4281/"
 
+team_lookup ={'Manchester United':'Man United',
+              'Newcastle United':'Newcastle',
+              'Queens Park Rangers':'QPR',
+              'West Bromwich Albion':'West Brom',
+              'West Ham United':'West Ham',
+              'Manchester City':'Man City',
+              'Tottenham Hotspur':'Tottenham'}
+
+
 def get_data(year,league="E0",base_link=base_link):
     """
 
@@ -187,3 +196,120 @@ def simulate_seasons(df,teams,atts,defs,home,intercept=None,n=100):
         t['iteration'] = i
         dfs.append(t)
     return pd.concat(dfs, ignore_index=True)
+
+# summarize parameters for all teams
+def create_team_param_table(teams,atts,defs,home,intercept=None):
+    """
+    Show the means of the posterior distributions for each team
+
+    teams: a pandas dataframe containing teams
+    atts: a pymc object representing the attacking strength of a team
+    defs: a pymc object representing the defensive strength of a team
+    home: a pymc object representing home field advantage
+    intercept: a pymc object representing the mean goals (not present in some models)
+    """
+    if intercept is None:
+        intercept_mean = 0
+    else:
+        intercept_mean = intercept.stats()['mean']
+
+    df_avg = pd.DataFrame({'avg_att': atts.stats()['mean'],
+                       'avg_def': defs.stats()['mean'],
+                       'avg_home': home.stats()['mean'],
+                       'avg_intercept': intercept_mean
+                       })
+
+    tpt = pd.merge(teams,df_avg,left_index=True,right_index=True)
+
+    # # remove columns
+    # tpt['i'] = None
+    # tpt['class'] = None
+    return tpt
+
+def clean_team_name(t):
+    if t in team_lookup.keys():
+        t = team_lookup[t]
+    else:
+        t = t.replace(" City","")
+    return t
+
+# get fixtures for league
+def get_epl_fixtures():
+    df = pd.read_table("./Data/epl_fixtures.txt",names=['Date','Time','Matchup'])
+    df['Date'] = pd.to_datetime(df['Date'],dayfirst=True)
+    df.drop('Time',axis=1,inplace=True)
+
+    matches = df['Matchup'].copy()
+    home = []
+    away = []
+    for m in matches:
+        t1,t2 = m.split(" v ")
+        t1 = clean_team_name(t1)
+        t2 = clean_team_name(t2)
+        home.append(t1)
+        away.append(t2)
+
+    df['home'] = home
+    df['away'] = away
+    return df[['Date','home','away']].copy()
+
+def simulate_match(row, atts, defs, home, intercept=None, n=1000):
+
+    output_row = pd.Series()
+
+    home_team = row['home_i']
+    away_team = row['away_i']
+
+    # save in the output
+    # output_row['date'] = row['Date']
+    output_row['home_i'] = home_team
+    output_row['away_i'] = away_team
+    output_row['home'] = row['home']
+    output_row['away'] = row['away']
+
+    num_samples = atts.trace().shape[0]
+
+    home_goals = np.zeros(n)
+    away_goals = np.zeros(n)
+    home_wins = 0.
+    away_wins = 0.
+    draws = 0.
+
+    for i in range(n):
+        draw = np.random.choice(num_samples)
+        home_theta = np.exp(home.trace()[draw] +
+                            intercept.trace()[draw,home_team] +
+                            atts.trace()[draw,home_team] +
+                            defs.trace()[draw,away_team])
+
+        away_theta = np.exp(
+                            intercept.trace()[draw,away_team] +
+                            atts.trace()[draw,away_team] +
+                            defs.trace()[draw,home_team])
+
+        home_goals[i] = np.random.poisson(home_theta)
+        away_goals[i] = np.random.poisson(away_theta)
+
+        if home_goals[i] > away_goals[i]: home_wins += 1.
+        elif home_goals[i] < away_goals[i]: away_wins += 1.
+        else: draws += 1.
+
+    output_row['p_home_win'] = home_wins*1./n
+    output_row['p_away_win'] = away_wins*1./n
+    output_row['p_draw'] = draws*1./n
+
+    output_row['mean_home_goals'] = np.mean(home_goals)
+    output_row['mean_away_goals'] = np.mean(away_goals)
+
+
+    output_row['l_home_goals'] = np.percentile(home_goals,2.5)
+    output_row['h_home_goals'] = np.percentile(home_goals,97.5)
+    output_row['l_away_goals'] = np.percentile(away_goals,2.5)
+    output_row['h_away_goals'] = np.percentile(away_goals,97.5)
+
+    return output_row
+
+def simulate_matches(fixtures, atts, defs, home, intercept=None, n=1000):
+    results = fixtures.apply(simulate_match,axis=1,args=(atts,defs,home,intercept,n))
+    return results
+
