@@ -12,9 +12,8 @@ We do this by fitting our [model](http://nbviewer.ipython.org/github/akhilketkar
 
 ### Predictions
 
-|                |             |            |            |        |                 |                 | 
-|----------------|-------------|------------|------------|--------|-----------------|-----------------| 
 | home           | away        | p_home_win | p_away_win | p_draw | mean_home_goals | mean_away_goals | 
+|----------------|-------------|------------|------------|--------|-----------------|-----------------| 
 | Arsenal        | Sunderland  | 0.735      | 0.105      | 0.160  | 2.363           | 0.725           | 
 | Aston Villa    | QPR         | 0.402      | 0.316      | 0.282  | 1.139           | 0.980           | 
 | Chelsea        | Man United  | 0.516      | 0.257      | 0.227  | 1.792           | 1.182           | 
