@@ -12,18 +12,19 @@ We do this by fitting our [model](http://nbviewer.ipython.org/github/akhilketkar
 
 ### Predictions
 
-| home       | away           | p_home_win | p_away_win | p_draw | mean_home_goals | mean_away_goals | 
-|------------|----------------|------------|------------|--------|-----------------|-----------------| 
-| Arsenal    | Crystal Palace | 64.3%      | 15.4%      | 20.3%  | 2.17            | 0.90            | 
-| Burnley    | Chelsea        | 16.1%      | 59.8%      | 24.1%  | 0.78            | 1.80            | 
-| Leicester  | Everton        | 27.6%      | 43.7%      | 28.7%  | 1.14            | 1.41            | 
-| Liverpool  | Southampton    | 40.9%      | 28.5%      | 30.6%  | 1.24            | 0.99            | 
-| Man United | Swansea        | 64.3%      | 15.1%      | 20.6%  | 2.06            | 0.91            | 
-| Newcastle  | Man City       | 23.3%      | 56.6%      | 20.1%  | 1.12            | 1.94            | 
-| QPR        | Hull           | 42.2%      | 28.7%      | 29.1%  | 1.24            | 0.97            | 
-| Stoke      | Aston Villa    | 52.7%      | 18.8%      | 28.5%  | 1.27            | 0.65            | 
-| West Brom  | Sunderland     | 40.3%      | 29.4%      | 30.3%  | 1.12            | 0.89            | 
-| West Ham   | Tottenham      | 41.4%      | 35.000%    | 23.6%  | 1.52            | 1.38            | 
+|                |             |            |            |        |                 |                 | 
+|----------------|-------------|------------|------------|--------|-----------------|-----------------| 
+| home           | away        | p_home_win | p_away_win | p_draw | mean_home_goals | mean_away_goals | 
+| Arsenal        | Sunderland  | 0.735      | 0.105      | 0.160  | 2.363           | 0.725           | 
+| Aston Villa    | QPR         | 0.402      | 0.316      | 0.282  | 1.139           | 0.980           | 
+| Chelsea        | Man United  | 0.516      | 0.257      | 0.227  | 1.792           | 1.182           | 
+| Crystal Palace | West Brom   | 0.566      | 0.204      | 0.230  | 1.578           | 0.827           | 
+| Everton        | Burnley     | 0.624      | 0.146      | 0.230  | 1.893           | 0.765           | 
+| Hull           | Liverpool   | 0.275      | 0.468      | 0.257  | 0.992           | 1.407           | 
+| Leicester      | Swansea     | 0.327      | 0.371      | 0.302  | 1.016           | 1.077           | 
+| Man City       | West Ham    | 0.639      | 0.163      | 0.198  | 2.122           | 0.979           | 
+| Newcastle      | Tottenham   | 0.316      | 0.446      | 0.238  | 1.315           | 1.583           | 
+| Stoke          | Southampton | 0.317      | 0.387      | 0.296  | 0.899           | 1.023           | 
 
 
 CSV to markdown converter thanks to [Donat Studios](https://donatstudios.com/CsvToMarkdownTable)
