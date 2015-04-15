@@ -8,7 +8,7 @@ title: Initial Observations
 This model has serious issues with regards to shrinking the observations to the mean.
 
 #### 2013-14 EPL Data 
-![BB EPL 1314](./Figures/bb1_obsVSsexpGoals1314E0.png)
+![BB EPL 1314](./Figures/bb1_obsVSexpGoals1314E0.png)
 
 #### 2014-15 EPL Data
 ![BB EPL 1415](./Figures/bb1_obsVSexpGoals1415E0.png)
