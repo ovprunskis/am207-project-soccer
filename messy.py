@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import math
 import os
+from fractions import Fraction
 
 
 ### GLOBAL VARIABLES ###
@@ -297,6 +298,15 @@ def simulate_match(row, atts, defs, home, intercept=None, n=1000):
     output_row['p_home_win'] = home_wins*1./n
     output_row['p_away_win'] = away_wins*1./n
     output_row['p_draw'] = draws*1./n
+
+    odds = lambda p: np.round(1./p,2)
+    # odds = lambda p: str(Fraction(p*1./(1.-p)).limit_denominator(20).numerator) + "/" + \
+    #                 str(Fraction(p*1./(1.-p)).limit_denominator(20).denominator)
+
+    output_row['odds_home_win'] = odds(output_row['p_home_win'])
+    output_row['odds_away_win'] = odds(output_row['p_away_win'])
+    output_row['odds_draw'] = odds(output_row['p_draw'])
+
 
     output_row['mean_home_goals'] = np.mean(home_goals)
     output_row['mean_away_goals'] = np.mean(away_goals)
