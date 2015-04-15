@@ -17,3 +17,5 @@ layout: default
 | West Brom  | Sunderland     | 40.3%      | 29.4%      | 30.3%  | 1.12            | 0.89            | 
 | West Ham   | Tottenham      | 41.4%      | 35.000%    | 23.6%  | 1.52            | 1.38            | 
 
+
+CSV to markdown converter thanks to [Donat Studios](https://donatstudios.com/CsvToMarkdownTable)
