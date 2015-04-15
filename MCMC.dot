@@ -1,0 +1,30 @@
+digraph G {
+away_theta [shape=invtriangle];
+defs [shape=invtriangle];
+defs -> away_theta  [label=defs];
+defs_star;
+defs_star -> defs  [label=defs_star];
+tau_def;
+tau_def -> defs_star  [label=tau];
+atts [shape=invtriangle];
+atts -> away_theta  [label=atts];
+atts_star;
+atts_star -> atts  [label=atts_star];
+tau_att;
+tau_att -> atts_star  [label=tau];
+intercept [shape=invtriangle];
+intercept -> away_theta  [label=intercept];
+intercept_star;
+intercept_star -> intercept  [label=intercept_star];
+home;
+home -> away_theta  [label=home];
+home_theta [shape=invtriangle];
+defs -> home_theta  [label=defs];
+atts -> home_theta  [label=atts];
+intercept -> home_theta  [label=intercept];
+home -> home_theta  [label=home];
+home_goals [style=filled];
+home_theta -> home_goals  [label=mu];
+away_goals [style=filled];
+away_theta -> away_goals  [label=mu];
+}
