@@ -10,7 +10,7 @@ We do this by fitting our [model](http://nbviewer.ipython.org/github/akhilketkar
 
 ![relstr](./Figures/relStrength1415E0.png)
 
-
+### Predictions
 
 | home       | away           | p_home_win | p_away_win | p_draw | mean_home_goals | mean_away_goals | 
 |------------|----------------|------------|------------|--------|-----------------|-----------------| 
