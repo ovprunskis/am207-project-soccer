@@ -73,6 +73,12 @@ def clean_data(matchdata,add_outcomes=True):
 
     return t,df
 
+def get_baseball_data(year=2014):
+    fname = "./Data/GL"  + str(year) + ".TXT"
+    df = pd.read_csv(fname,header=None)[[0,3,6,9,10]]
+    df = df.rename(columns = {0:"Date",3:"AwayTeam",6:"HomeTeam",9:"FTAG",10:"FTHG"})
+    return df
+
 def create_season_table(season,teams):
     """
     Create a summary dataframe with wins, losses, goals for, etc.
@@ -107,6 +113,36 @@ def create_season_table(season,teams):
     df['champion'] = (df.position == 1).astype(int)
     df['qualified_for_CL'] = (df.position < 5).astype(int)
     df['relegated'] = (df.position > 17).astype(int)
+    return df
+
+def create_season_table_baseball(season,teams):
+    """
+    Create a summary dataframe with wins, losses, goals for, etc.
+
+    """
+    g = season.groupby('i_home')
+    home = pd.DataFrame({'home_goals': g.home_goals.sum(),
+                         'home_goals_against': g.away_goals.sum(),
+                         'home_wins': g.home_win.sum(),
+                         'home_losses': g.home_loss.sum()
+                         })
+    g = season.groupby('i_away')
+    away = pd.DataFrame({'away_goals': g.away_goals.sum(),
+                         'away_goals_against': g.home_goals.sum(),
+                         'away_wins': g.away_win.sum(),
+                         'away_losses': g.away_loss.sum()
+                         })
+    df = home.join(away)
+    df['wins'] = df.home_wins + df.away_wins
+    df['losses'] = df.home_losses + df.away_losses
+    df['gf'] = df.home_goals + df.away_goals
+    df['ga'] = df.home_goals_against + df.away_goals_against
+    df['gd'] = df.gf - df.ga
+    df = pd.merge(teams, df, left_on='i', right_index=True)
+    df = df.sort_index(by='wins', ascending=False)
+    df = df.reset_index()
+    df['position'] = df.index + 1
+
     return df
 
 # function to simulate a season
