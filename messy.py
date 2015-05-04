@@ -265,14 +265,7 @@ def simulate_season(df,atts,defs,home,intercept=None):
     draw = np.random.randint(0, num_samples)
     atts_draw = pd.DataFrame({'att': atts.trace()[draw, :],})
     defs_draw = pd.DataFrame({'def': defs.trace()[draw, :],})
-    
-    if home is not None:
-        id = home.trace()[draw]
-        if id.shape != ():
-            home_draw = pd.DataFrame({'home': home.trace()[draw],})
-        else:
-            home_draw = id
-
+    home_draw = home.trace()[draw]
 
     if intercept is not None:
         id = intercept.trace()[draw]
@@ -306,21 +299,8 @@ def simulate_season(df,atts,defs,home,intercept=None):
     else:
         season['intercept_home'] = 0
         season['intercept_away'] = 0
-            
 
-    ## check if the model uses an intercept term
-    if home is not None:
-
-        ## check if it is one intercept term for all teams
-        if id.shape == ():
-            season['home'] = home_draw
-        else:
-            season = pd.merge(season,home_draw,left_on = 'i_home',right_index=True)
-            
-
-
-
-    #season['home'] = home_draw
+    season['home'] = home_draw
     season['home_theta'] = season.apply(lambda x: math.exp(x['intercept_home'] +
                                                            x['home'] +
                                                            x['att_home'] +
@@ -352,7 +332,7 @@ def simulate_seasons(df,teams,atts,defs,home,intercept=None,n=100):
     """
     dfs = []
     for i in range(n):
-        s = simulate_season(df,atts,defs,home,intercept)
+        s = simulate_season_home(df,atts,defs,home,intercept)
         t = create_season_table(s,teams)
         t['iteration'] = i
         dfs.append(t)
@@ -443,7 +423,7 @@ def simulate_match(row, atts, defs, home, intercept=None, n=1000):
 
     for i in range(n):
         draw = np.random.choice(num_samples)
-        home_theta = np.exp(home.trace()[draw,home_team] +
+        home_theta = np.exp(home.trace()[draw] +
                             intercept.trace()[draw,home_team] +
                             atts.trace()[draw,home_team] +
                             defs.trace()[draw,away_team])
