@@ -265,7 +265,14 @@ def simulate_season(df,atts,defs,home,intercept=None):
     draw = np.random.randint(0, num_samples)
     atts_draw = pd.DataFrame({'att': atts.trace()[draw, :],})
     defs_draw = pd.DataFrame({'def': defs.trace()[draw, :],})
-    home_draw = home.trace()[draw]
+    
+    if home is not None:
+        id = home.trace()[draw]
+        if id.shape != ():
+            home_draw = pd.DataFrame({'home': home.trace()[draw],})
+        else:
+            home_draw = id
+
 
     if intercept is not None:
         id = intercept.trace()[draw]
@@ -294,14 +301,26 @@ def simulate_season(df,atts,defs,home,intercept=None):
             season = season.rename(columns = {'intercept': 'intercept_home'})
             season = pd.merge(season,intercept_draw,left_on = 'i_away',right_index=True)
             season = season.rename(columns = {'intercept': 'intercept_away'})
-
-    ## model does not use an intercept
+         
+        ## model does not use an intercept
     else:
         season['intercept_home'] = 0
         season['intercept_away'] = 0
+            
+
+    ## check if the model uses an intercept term
+    if home is not None:
+
+        ## check if it is one intercept term for all teams
+        if id.shape == ():
+            season['home'] = home_draw
+        else:
+            season = pd.merge(season,home_draw,left_on = 'i_home',right_index=True)
+            
 
 
-    season['home'] = home_draw
+
+    #season['home'] = home_draw
     season['home_theta'] = season.apply(lambda x: math.exp(x['intercept_home'] +
                                                            x['home'] +
                                                            x['att_home'] +
@@ -424,7 +443,7 @@ def simulate_match(row, atts, defs, home, intercept=None, n=1000):
 
     for i in range(n):
         draw = np.random.choice(num_samples)
-        home_theta = np.exp(home.trace()[draw] +
+        home_theta = np.exp(home.trace()[draw,home_team] +
                             intercept.trace()[draw,home_team] +
                             atts.trace()[draw,home_team] +
                             defs.trace()[draw,away_team])
@@ -469,3 +488,159 @@ def simulate_matches(fixtures, atts, defs, home, intercept=None, n=1000):
     results = fixtures.apply(simulate_match,axis=1,args=(atts,defs,home,intercept,n))
     return results
 
+# function to simulate a season
+def simulate_season_home(df,atts,defs,home,intercept=None):
+    """
+    Simulate a season once, using one random draw from the mcmc chain.
+
+    df: a pandas dataframe containing the schedule for a season
+    atts: a pymc object representing the attacking strength of a team
+    defs: a pymc object representing the defensive strength of a team
+    home: a pymc object representing home field advantage
+    intercept: a pymc object representing the mean goals (not present in some models)
+    """
+    num_samples = atts.trace().shape[0]
+    draw = np.random.randint(0, num_samples)
+    atts_draw = pd.DataFrame({'att': atts.trace()[draw, :],})
+    defs_draw = pd.DataFrame({'def': defs.trace()[draw, :],})
+    home_draw = pd.DataFrame({'home':home.trace()[draw, :],})
+
+    if intercept is not None:
+        id = intercept.trace()[draw]
+        if id.shape != ():
+            intercept_draw = pd.DataFrame({'intercept': intercept.trace()[draw],})
+        else:
+            intercept_draw = id
+
+    season = df[['i_home','i_away']].copy()
+    season = pd.merge(season, atts_draw, left_on='i_home', right_index=True)
+    season = pd.merge(season, defs_draw, left_on='i_home', right_index=True)
+    season = season.rename(columns = {'att': 'att_home', 'def': 'def_home'})
+    season = pd.merge(season, atts_draw, left_on='i_away', right_index=True)
+    season = pd.merge(season, defs_draw, left_on='i_away', right_index=True)
+    season = season.rename(columns = {'att': 'att_away', 'def': 'def_away'})
+    season = pd.merge(season,home_draw,left_on = 'i_home',right_index=True)
+
+    ## check if the model uses an intercept term
+    if intercept is not None:
+
+        ## check if it is one intercept term for all teams
+        if id.shape == ():
+            season['intercept_home'] = intercept_draw
+            season['intercept_away'] = intercept_draw
+        else:
+            season = pd.merge(season,intercept_draw,left_on = 'i_home',right_index=True)
+            season = season.rename(columns = {'intercept': 'intercept_home'})
+            season = pd.merge(season,intercept_draw,left_on = 'i_away',right_index=True)
+            season = season.rename(columns = {'intercept': 'intercept_away'})
+
+    ## model does not use an intercept
+    else:
+        season['intercept_home'] = 0
+        season['intercept_away'] = 0
+
+    season['home_theta'] = season.apply(lambda x: math.exp(x['intercept_home'] +
+                                                           x['home'] +
+                                                           x['att_home'] +
+                                                           x['def_away']), axis=1)
+    season['away_theta'] = season.apply(lambda x: math.exp(x['intercept_away'] +
+                                                           x['att_away'] +
+                                                           x['def_home']), axis=1)
+    season['home_goals'] = season.apply(lambda x: np.random.poisson(x['home_theta']), axis=1)
+    season['away_goals'] = season.apply(lambda x: np.random.poisson(x['away_theta']), axis=1)
+    season['home_outcome'] = season.apply(lambda x: 'win' if x['home_goals'] > x['away_goals'] else
+                                                    'loss' if x['home_goals'] < x['away_goals'] else 'draw', axis=1)
+    season['away_outcome'] = season.apply(lambda x: 'win' if x['home_goals'] < x['away_goals'] else
+                                                    'loss' if x['home_goals'] > x['away_goals'] else 'draw', axis=1)
+    season = season.join(pd.get_dummies(season.home_outcome, prefix='home'))
+    season = season.join(pd.get_dummies(season.away_outcome, prefix='away'))
+    return season
+
+# simulate many seasons
+def simulate_seasons_home(df,teams,atts,defs,home,intercept=None,n=100):
+    """
+    Simulate a season once, using one random draw from the mcmc chain.
+
+    df: a pandas dataframe containing the schedule for a season
+    teams: a pandas dataframe containing teams
+    atts: a pymc object representing the attacking strength of a team
+    defs: a pymc object representing the defensive strength of a team
+    home: a pymc object representing home field advantage, unique for each team
+    intercept: a pymc object representing the mean goals (not present in some models)
+    """
+    dfs = []
+    for i in range(n):
+        s = simulate_season_home(df,atts,defs,home,intercept)
+        t = create_season_table(s,teams)
+        t['iteration'] = i
+        dfs.append(t)
+    return pd.concat(dfs, ignore_index=True)
+
+def simulate_match_home(row, atts, defs, home, intercept=None, n=1000):
+
+    output_row = pd.Series()
+
+    home_team = row['home_i']
+    away_team = row['away_i']
+
+    # save in the output
+    # output_row['date'] = row['Date']
+    output_row['home_i'] = home_team
+    output_row['away_i'] = away_team
+    output_row['home'] = row['home']
+    output_row['away'] = row['away']
+
+    num_samples = atts.trace().shape[0]
+
+    home_goals = np.zeros(n)
+    away_goals = np.zeros(n)
+    home_wins = 0.
+    away_wins = 0.
+    draws = 0.
+
+    for i in range(n):
+        draw = np.random.choice(num_samples)
+        home_theta = np.exp(home.trace()[draw,home_team] +
+                            intercept.trace()[draw,home_team] +
+                            atts.trace()[draw,home_team] +
+                            defs.trace()[draw,away_team])
+
+        away_theta = np.exp(
+                            intercept.trace()[draw,away_team] +
+                            atts.trace()[draw,away_team] +
+                            defs.trace()[draw,home_team])
+
+        home_goals[i] = np.random.poisson(home_theta)
+        away_goals[i] = np.random.poisson(away_theta)
+
+        if home_goals[i] > away_goals[i]: home_wins += 1.
+        elif home_goals[i] < away_goals[i]: away_wins += 1.
+        else: draws += 1.
+
+    output_row['p_home_win'] = home_wins*1./n
+    output_row['p_away_win'] = away_wins*1./n
+    output_row['p_draw'] = draws*1./n
+
+    odds = lambda p: np.round(1./p,2)
+    # odds = lambda p: str(Fraction(p*1./(1.-p)).limit_denominator(20).numerator) + "/" + \
+    #                 str(Fraction(p*1./(1.-p)).limit_denominator(20).denominator)
+
+    output_row['odds_home_win'] = odds(output_row['p_home_win'])
+    output_row['odds_away_win'] = odds(output_row['p_away_win'])
+    output_row['odds_draw'] = odds(output_row['p_draw'])
+
+
+    output_row['mean_home_goals'] = np.mean(home_goals)
+    output_row['mean_away_goals'] = np.mean(away_goals)
+
+
+    output_row['l_home_goals'] = np.percentile(home_goals,2.5)
+    output_row['h_home_goals'] = np.percentile(home_goals,97.5)
+    output_row['l_away_goals'] = np.percentile(away_goals,2.5)
+    output_row['h_away_goals'] = np.percentile(away_goals,97.5)
+
+    return output_row
+
+def simulate_matches_home(fixtures, atts, defs, home, intercept=None, n=1000):
+    results = fixtures.apply(simulate_match_home,axis=1,args=(atts,defs,home,intercept,n))
+    return results
