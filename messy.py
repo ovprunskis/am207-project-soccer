@@ -20,6 +20,51 @@ team_lookup ={'Manchester United':'Man United',
               'Manchester City':'Man City',
               'Tottenham Hotspur':'Tottenham'}
 
+team_lookup_NBA ={'Los Angeles Lakers' : 'LAL',
+                  'Chicago Bulls' : 'CHI',
+                  'Charlotte Bobcats' : 'CHA',
+                  'San Antonio Spurs' : 'SAS',
+                  'Philadelphia 76ers' : 'PHI',
+                  'Detroit Pistons' : 'DET',
+                  'Boston Celtics' : 'BOS',
+                  'Miami Heat' : 'MIA',
+                  'Orlando Magic' : 'ORL',
+                  'Portland Trail Blazers' : 'POR',
+                  'Golden State Warriors' : 'GSW',
+                  'New York Knicks' : 'NYK',
+                  'Washington Wizards' : 'WAS',
+                  'Utah Jazz' : 'UTA',
+                  'Dallas Mavericks' : 'DAL',
+                  'Minnesota Timberwolves' : 'MIN',
+                  'Los Angeles Clippers' : 'LAC',
+                  'Oklahoma City Thunder' : 'OKC',
+                  'Milwaukee Bucks' : 'MIL',
+                  'Memphis Grizzlies' : 'MEM',
+                  'Toronto Raptors' : 'TOR',
+                  'Houston Rockets' : 'HOU',
+                  'Phoenix Suns' : 'PHX',
+                  'Sacramento Kings' : 'SAC',
+                  'New Orleans Pelicans' : 'NOP',
+                  'Cleveland Cavaliers' : 'CLE',
+                  'Atlanta Hawks' : 'ATL',
+                  'Brooklyn Nets' : 'BKN',
+                  'Indiana Pacers' : 'IND',
+                  'Denver Nuggets' : 'DEN'}
+
+def month2num(month):
+    return{'Jan' : 1,
+           'Feb' : 2,
+           'Mar' : 3,
+           'Apr' : 4,
+           'May' : 5,
+           'Jun' : 6,
+           'Jul' : 7,
+           'Aug' : 8,
+           'Sep' : 9, 
+           'Oct' : 10,
+           'Nov' : 11,
+           'Dec' : 12
+           }[month]
 
 def get_data(year,league="E0",base_link=base_link):
     """
@@ -61,7 +106,10 @@ def clean_data(matchdata,add_outcomes=True):
     df = pd.merge(df, t, left_on='AwayTeam', right_on='team', how='left')
     df = df.rename(columns = {'i': 'i_away'}).drop('team', 1)
     df = df.rename(columns = {'FTHG': 'home_goals','FTAG': 'away_goals'})
-
+    
+    df['home_goals'] = df['home_goals'].astype(int)
+    df['away_goals'] = df['away_goals'].astype(int)
+    
     if add_outcomes:
         df['home_outcome'] = df.apply(lambda x: 'win' if x['home_goals'] > x['away_goals']
                                  else 'loss' if x['home_goals'] < x['away_goals'] else 'draw',axis = 1)
@@ -78,6 +126,35 @@ def get_baseball_data(year=2014):
     df = pd.read_csv(fname,header=None)[[0,3,6,9,10]]
     df = df.rename(columns = {0:"Date",3:"AwayTeam",6:"HomeTeam",9:"FTAG",10:"FTHG"})
     return df
+
+def get_NBA_data(year):
+    fname = "./Data/NBA" + str(year) + ".TXT" #Year format example (2013-2014 season) -> 1314
+    df = pd.read_csv(fname,header=None)[[0,2,3,4,5]]
+    df = df.rename(columns = {0:"Date_raw", 2:"AwayTeam_raw", 3:"FTAG" , 4:"HomeTeam_raw", 5:"FTHG"})
+    df = df.ix[1:]
+    
+    HomeNames = df["HomeTeam_raw"].copy()
+    AwayNames = df["AwayTeam_raw"].copy()
+    home = []
+    away = []
+    for t1 in HomeNames:
+        t1 = clean_team_name_NBA(t1)
+        home.append(t1)
+    for t2 in AwayNames:
+        t2 = clean_team_name_NBA(t2)
+        away.append(t2)  
+    df["HomeTeam"] = home
+    df["AwayTeam"] = away
+    
+    dates = []
+    
+    for entry in df.index:
+        date_split = df["Date_raw"][entry].split(" ")
+        date = str(date_split[3]) + str(month2num(str(date_split[1]))) + str(date_split[2])
+        dates.append(date)
+    df["Date"] = dates
+    return df[["Date","AwayTeam","FTAG","HomeTeam","FTHG"]].copy()
+
 
 def create_season_table(season,teams):
     """
@@ -142,7 +219,35 @@ def create_season_table_baseball(season,teams):
     df = df.sort_index(by='wins', ascending=False)
     df = df.reset_index()
     df['position'] = df.index + 1
+    return df
 
+def create_season_table_NBA(season, teams):
+    """
+    Create a summary dataframe with wins, losses, goals for, etc.
+
+    """
+    g = season.groupby('i_home')
+    home = pd.DataFrame({'home_goals': g.home_goals.sum(),
+                         'home_goals_against': g.away_goals.sum(),
+                         'home_wins': g.home_win.sum(),
+                         'home_losses': g.home_loss.sum()
+                         })
+    g = season.groupby('i_away')
+    away = pd.DataFrame({'away_goals': g.away_goals.sum(),
+                         'away_goals_against': g.home_goals.sum(),
+                         'away_wins': g.away_win.sum(),
+                         'away_losses': g.away_loss.sum()
+                         })
+    df = home.join(away)
+    df['wins'] = df.home_wins + df.away_wins
+    df['losses'] = df.home_losses + df.away_losses
+    df['gf'] = df.home_goals + df.away_goals
+    df['ga'] = df.home_goals_against + df.away_goals_against
+    df['gd'] = df.gf - df.ga
+    df = pd.merge(teams, df, left_on='i', right_index=True)
+    df = df.sort_index(by='wins', ascending=False)
+    df = df.reset_index()
+    df['position'] = df.index + 1
     return df
 
 # function to simulate a season
@@ -268,6 +373,11 @@ def clean_team_name(t):
         t = team_lookup[t]
     else:
         t = t.replace(" City","")
+    return t
+
+def clean_team_name_NBA(t):
+    if t in team_lookup_NBA.keys():
+        t = team_lookup_NBA[t]
     return t
 
 # get fixtures for league
